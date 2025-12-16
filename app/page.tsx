@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 
-type Todo = {
+interface Todo {
   id: number;
   text: string;
   completed: boolean;
-};
+}
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -14,7 +14,16 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem("todos");
-    if (saved) setTodos(JSON.parse(saved));
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setTodos(parsed as Todo[]);
+        }
+      } catch (e) {
+        console.error("Failed to parse todos");
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -23,21 +32,24 @@ export default function Home() {
 
   const addTodo = () => {
     if (input.trim()) {
-      setTodos([...todos, { id: Date.now(), text: input, completed: false }]);
+      setTodos((prev) => [
+        ...prev,
+        { id: Date.now(), text: input.trim(), completed: false },
+      ]);
       setInput("");
     }
   };
 
   const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
+    setTodos((prev) =>
+      prev.map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
   };
 
   const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
   return (
